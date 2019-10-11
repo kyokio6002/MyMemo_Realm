@@ -1,0 +1,6 @@
+framework module Pods_MyMemo_New_RealmVersion_ {
+  umbrella header "Pods-MyMemo_New(RealmVersion)-umbrella.h"
+
+  export *
+  module * { export * }
+}
