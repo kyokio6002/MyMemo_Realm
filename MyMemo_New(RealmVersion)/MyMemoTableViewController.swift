@@ -27,13 +27,6 @@ class MyMemoTableViewController: UITableViewController {
     }
     
     
-    
-    
-    
-    
-    
-    
-    
     //+ボタンを押した時の処理
     @IBAction func didTappedAddButton(_ sender: Any) {
         let alert = UIAlertController(title: "URLを追加しますか", message: nil, preferredStyle: .alert)
@@ -70,7 +63,23 @@ class MyMemoTableViewController: UITableViewController {
     }
     
     
-    
+    //realmの要素の中から条件に合う要素を見つける関数
+    func findRealmOrder(SelectOrder:Int)->Int{
+        //MyMemo()をインスタンス化
+        let realm = try! Realm()
+        let myMemos = realm.objects(MyMemo.self)
+        
+        var returnOrder = 0
+
+        for i in 0..<myMemos.count{
+            if myMemos[i].order == SelectOrder{
+                returnOrder = i
+            }
+            else {
+            }
+        }
+        return returnOrder
+    }
     
     
     
@@ -90,11 +99,13 @@ class MyMemoTableViewController: UITableViewController {
     
     // MARK: - Table view data source
 
+    //section数は1
     override func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
         return 1
     }
 
+    //row数は要素分
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
         
@@ -104,6 +115,7 @@ class MyMemoTableViewController: UITableViewController {
         return myMemos.count
     }
 
+    //cellの登録
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
 
@@ -111,11 +123,14 @@ class MyMemoTableViewController: UITableViewController {
         let realm = try! Realm()
         let myMemos = realm.objects(MyMemo.self)
         
-        for i in 0..<myMemos.count{
+        cell.textLabel?.text = myMemos[findRealmOrder(SelectOrder: indexPath.row)].text
+        //↑上の関数で書き換えた
+        // myMemosのorder要素がindexPath.rowに一致した行のtext要素を入れる
+        /*for i in 0..<myMemos.count{
             if myMemos[i].order == indexPath.row{
                cell.textLabel?.text = myMemos[i].text
             }
-        }
+        }*/
         
         return cell
     }
@@ -149,8 +164,13 @@ class MyMemoTableViewController: UITableViewController {
                     realm.delete(myMemos[indexPath.row])
                     tableView.deleteRows(at: [indexPath], with: .fade)
                 }else{
+                    let deleteMyMemo = myMemos[findRealmOrder(SelectOrder: indexPath.row)]
+                    realm.delete(deleteMyMemo)
+                    tableView.deleteRows(at: [indexPath], with: .fade)
+                    print("text:\(myMemos[findRealmOrder(SelectOrder: indexPath.row)].text),order:\(myMemos[findRealmOrder(SelectOrder: indexPath.row)].order)を消去")
+                    //↑上の関数で書き換えた
                     //realmの要素の個数分ループ
-                    for i in 0..<myMemos.count{
+                    /*for i in 0..<myMemos.count{
                         print("indexPath.row:\(indexPath.row),[i].order:\(myMemos[i].order)")
                         if myMemos[i].order == indexPath.row{
                             print("text:\(myMemos[i].text),order:\(myMemos[i].order)を消去")
@@ -160,7 +180,7 @@ class MyMemoTableViewController: UITableViewController {
                             //消去したらbreakする
                             break
                         }
-                    }
+                    }*/
                 }
                 
                 //orderの更新をする
@@ -192,27 +212,115 @@ class MyMemoTableViewController: UITableViewController {
         
         let realm = try! Realm()
         let myMemos = realm.objects(MyMemo.self)
-       for i in 0..<myMemos.count{
-            if myMemos[i].order == fromIndexPath.row{
-                
-                //fromからtoにorderを変更
-                print("order変更：\(myMemos[i].order)(\(fromIndexPath.row))→\(to.row)")
-                myMemos[i].order = to.row
-                //移動先が上か下かで条件分岐
-                //上に移動した場合
-                /*if fromIndexPath.row > to.row{
-                    for j in to.row..<fromIndexPath.row{
-                        
+        
+        //let results = realm.objects(MyMemo.self).sorted(byKeyPath: "order",ascending: true)
+        //print(results)
+        
+        
+        
+        //移動先が上か下かで条件分岐
+        //上に移動した場合
+        if fromIndexPath.row > to.row{
+            print("上に移動")
+            
+            //先に指定してもの-2に書き換え
+            try! realm.write {
+                myMemos[findRealmOrder(SelectOrder: fromIndexPath.row)].order = -2
+            }
+            //↑上の関数で書き換えた
+            /*for t in 0..<myMemos.count{
+                if myMemos[t].order == fromIndexPath.row{
+                    try! realm.write {
+                        myMemos[t].order = -2
                     }
                 }
-                //下に移動した場合
-                else if fromIndexPath.row < to.row{
-                    for j in fromIndexPath.row+1..<to.row{
-                        
+            }*/
+
+            //移動先にorderを変更
+            for j in 0...(fromIndexPath.row-1)-to.row{
+                print(j)
+                //fromIndexPathからtoまでのorderを変更する
+                try! realm.write {
+                    myMemos[findRealmOrder(SelectOrder: (fromIndexPath.row-1)-j)].order += 1
+                }
+                //↑上の関数で書き換えた
+                /*for k in 0..<myMemos.count{
+                    if myMemos[k].order == (fromIndexPath.row-1)-j{
+                        print("myMemos[\(k)].order:\(myMemos[k].order)→\(myMemos[k].order+1)")
+                        try! realm.write {
+                            myMemos[k].order += 1
+                        }
                     }
                 }*/
             }
+            
+            //-2に移動させていたもを書き換え
+            try! realm.write {
+                myMemos[findRealmOrder(SelectOrder: -2)].order = to.row
+            }
+            //↑上の関数で書き換えた
+            /*for t in 0..<myMemos.count{
+                if myMemos[t].order == -2{
+                    try! realm.write {
+                        myMemos[t].order = to.row
+                    }
+                }
+            }*/
+            
         }
+                    
+                    
+                    
+        //下に移動した場合
+        else if fromIndexPath.row < to.row{
+            print("下に移動")
+            
+            //-2に移動させておく
+            try! realm.write {
+                myMemos[findRealmOrder(SelectOrder: fromIndexPath.row)].order = -2
+            }
+            //↑上の関数で書き換えた
+            /*for t in 0..<myMemos.count{
+                if myMemos[t].order == fromIndexPath.row{
+                    try! realm.write {
+                        myMemos[t].order = -2
+                    }
+                }
+            }*/
+            
+            //移動先にorderを変更
+            for j in fromIndexPath.row+1...to.row{
+                print(j)
+                //fromIndexPathからtoまでのorderを変更する
+                try! realm.write {
+                    myMemos[findRealmOrder(SelectOrder: j)].order -= 1
+                }
+                //↑上の関数で書き換えた
+                /*for k in 0 ..< myMemos.count {
+                    if myMemos[k].order == j{
+                        print("myMemos[\(k)].order:\(myMemos[k].order)→\(myMemos[k].order-1)")
+                        try! realm.write {
+                            myMemos[k].order -= 1
+                        }
+                    }
+                }*/
+            }
+            
+            //−2に移動させていたfromを置き換え
+            try! realm.write {
+                myMemos[findRealmOrder(SelectOrder: -2)].order = to.row
+            }
+            //↑上の関数で書き換えた
+            /*for t in 0..<myMemos.count{
+                if myMemos[t].order == -2{
+                    try! realm.write {
+                        myMemos[t].order = to.row
+                    }
+                }
+            }*/
+        }
+        
+        //print(myMemos.sorted(byKeyPath: "order",ascending: true))
         
         //これが配列を使った場合の処理
         /*let moveData = tableView.cellForRow(at: fromIndexPath)?.textLabel?.text
